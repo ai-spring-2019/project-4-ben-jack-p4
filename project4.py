@@ -45,8 +45,11 @@ def dot_product(v1, v2):
 
 def logistic(x):
     """Logistic / sigmoid function"""
-    val = 1 / (1 + math.e ** -x)
-    return val
+    try:
+        denom = (1 + math.e ** -x)
+    except OverflowError:
+        return 0.0
+    return 1.0 / denom
 
 def accuracy(nn, pairs):
     """Computes the accuracy of a network on given pairs. Assumes nn has a
