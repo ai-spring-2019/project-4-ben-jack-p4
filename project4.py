@@ -109,10 +109,10 @@ class Edge:
 
 
 class Node:
-    def __init__(self, value):
-        self._value = value
+    def __init__(self, layer):
         self._edges_forward = []
         self._edges_backward = []
+        self._layer = layer
 
     def set_forward_edge(self, edge):
         self._edges_forward.append(edge)
@@ -144,7 +144,8 @@ class Node:
     def get_error(self):
         return self._error
 
-
+    def __str__(self):
+        return "Node: value: " + str(self._value) + " a_i: " + str(self._a_i) + " Layer: " + str(self._layer)
 
 class NeuralNetwork:
     def __init__(self, training_data, structure_defn):
@@ -161,21 +162,21 @@ class NeuralNetwork:
         #make some nodes
 
         for _ in range(structure_defn.input_nodes):
-            self._input_layer.append(Node(0))
+            self._input_layer.append(Node("input"))
 
         self._all_layers.append(self._input_layer)
 
-        for l in structure_defn.hidden_layers:
+        for l in range(len(structure_defn.hidden_layers)):
             current = []
-            for _ in range(l):
-                current.append(Node(0))
+            for _ in range(structure_defn.hidden_layers[l]):
+                current.append(Node(l))
             self._hidden_layers.append(current)
             self._all_layers.append(current)
 
         for _ in range(structure_defn.output_nodes):
-            self._output_layer.append(Node(0))
+            self._output_layer.append(Node("output"))
 
-        self._all_layers.append(self._input_layer)
+        self._all_layers.append(self._output_layer)
 
         #connect them up
 
@@ -190,6 +191,7 @@ class NeuralNetwork:
     def train(self, epochs):
 
         for t in range(epochs):
+            print("Running epoch " + str(t) + "...")
             alpha = 1000/(1000 + t)
 
             for example in self._training_data:
@@ -207,6 +209,8 @@ class NeuralNetwork:
             for node in layer:
                 in_j = node.propagate()
                 node.set_a_i(logistic(in_j))
+
+        return self._output_layer
 
     def _back_propagate(self, training_example):
 
@@ -229,8 +233,21 @@ class NeuralNetwork:
         for e in self._edges:
             e.refresh_weight(alpha)
 
-    def validate(self):
-        pass
+    def validate(self, validation_examples):
+        total_correct = 0
+        for ex in validation_examples:
+
+            output_values = list(map(lambda n : n.get_a_i(), self._propagate(ex)))
+            is_correct = True
+
+            print("Validating on example: " + str(ex[1]) + " " + str(output_values))
+
+            for i in range(len(output_values)):
+                if output_values[i] != ex[1][i]:
+                    is_correct = False
+            if is_correct:
+                total_correct += 1
+        print(total_correct / len(validation_examples))
 
 
 def setup(training, hidden_layers):
@@ -240,7 +257,7 @@ def setup(training, hidden_layers):
     network = NeuralNetwork(training, s_defn)
     network.train(20)
 
-    network.validate()
+    network.validate(training)
 
 
 def main():
@@ -252,10 +269,10 @@ def main():
     training = [([1.0] + x, y) for (x, y) in pairs]
 
     # Check out the data:
-    for example in training:
-        print(example)
+    # for example in training:
+    #     print(example)
 
-    setup(training, [100, 50])
+    setup(training, [10, 50])
 
     ### I expect the running of your program will work something like this;
     ### this is not mandatory and you could have something else below entirely.
