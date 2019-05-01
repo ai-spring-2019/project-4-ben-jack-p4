@@ -80,8 +80,167 @@ def accuracy(nn, pairs):
 ################################################################################
 ### Neural Network code goes here
 
+class StructureDefn:
+    def __init__(self, input_nodes, output_nodes, hidden_layers=[]):
+        self.input_nodes = input_nodes
+        self.output_nodes = output_nodes
+        self.hidden_layers = hidden_layers
+
+class Edge:
+    def __init__(self, node_1, node_2, weight):
+        self._node_1 = node_1
+        self._node_2 = node_2
+        self._weight = weight
+
+    def get_weight(self):
+        return self._weight
+
+    def set_weight(self, weight):
+        self._weight = weight
+
+    def propagate(self):
+        return self._node_1.get_a_i() * self._weight
+
+    def back_propagate(self):
+        return self._node_2.get_error() * self._weight
+
+    def refresh_weight(self, alpha):
+        self._weight = self._weight + alpha * self._node_1.get_a_i() * self._node_2.get_error()
 
 
+class Node:
+    def __init__(self, value):
+        self._value = value
+        self._edges_forward = []
+        self._edges_backward = []
+
+    def set_forward_edge(self, edge):
+        self._edges_forward.append(edge)
+
+    def set_backward_edge(self, edge):
+        self._edges_backward.append(edge)
+
+    def propagate(self):
+        sum = 0
+        for e in self._edges_backward:
+            sum += e.propagate()
+        return sum
+
+    def back_propagate(self):
+        sum = 0
+        for e in self._edges_forward:
+            sum += e.back_propagate()
+        return sum
+
+    def set_a_i(self, a_i):
+        self._a_i = a_i
+
+    def get_a_i(self):
+        return self._a_i
+
+    def set_error(self, error):
+        self._error = error
+
+    def get_error(self):
+        return self._error
+
+
+
+class NeuralNetwork:
+    def __init__(self, training_data, structure_defn):
+        self._training_data = training_data
+
+        self._input_layer = []
+        self._output_layer = []
+        self._hidden_layers = []
+
+        self._all_layers = []
+
+        self._edges = []
+
+        #make some nodes
+
+        for _ in range(structure_defn.input_nodes):
+            self._input_layer.append(Node(0))
+
+        self._all_layers.append(self._input_layer)
+
+        for l in structure_defn.hidden_layers:
+            current = []
+            for _ in range(l):
+                current.append(Node(0))
+            self._hidden_layers.append(current)
+            self._all_layers.append(current)
+
+        for _ in range(structure_defn.output_nodes):
+            self._output_layer.append(Node(0))
+
+        self._all_layers.append(self._input_layer)
+
+        #connect them up
+
+        for i in range(len(self._all_layers) - 1):
+            for n1 in self._all_layers[i]:
+                for n2 in self._all_layers[i+1]:
+                    e = Edge(n1, n2, random.randrange(0, 1))
+                    self._edges.append(e)
+                    n1.set_forward_edge(e)
+                    n2.set_backward_edge(e)
+
+    def train(self, epochs):
+
+        for t in range(epochs):
+            alpha = 1000/(1000 + t)
+
+            for example in self._training_data:
+                self._propagate(example)
+
+                self._back_propagate(example)
+
+                self._correct_edges(alpha)
+
+    def _propagate(self, training_example):
+        for i in range(len(self._input_layer)):
+            self._input_layer[i].set_a_i(training_example[0][i])
+
+        for layer in self._all_layers[1:]:
+            for node in layer:
+                in_j = node.propagate()
+                node.set_a_i(logistic(in_j))
+
+    def _back_propagate(self, training_example):
+
+        for j in range(len(self._output_layer)):
+            node = self._output_layer[j]
+            ex = training_example[1][j]
+
+            a_i = node.get_a_i()
+            node.set_error(a_i * (1 - a_i) * (ex - a_i))
+
+        for i in range(len(self._all_layers) - 2, 0, -1):
+
+            layer = self._all_layers[i]
+            for i in range(len(layer)):
+                node = layer[i]
+                node.set_error(node.get_a_i() * (1 - node.get_a_i()) * node.back_propagate())
+
+    def _correct_edges(self, alpha):
+
+        for e in self._edges:
+            e.refresh_weight(alpha)
+
+    def validate(self):
+        pass
+
+
+def setup(training, hidden_layers):
+    s_defn = StructureDefn(len(training[0][0]),
+                           len(training[0][1]),
+                           hidden_layers)
+    network = NeuralNetwork(training, s_defn)
+    network.train(20)
+
+    network.validate()
 
 
 def main():
@@ -95,6 +254,8 @@ def main():
     # Check out the data:
     for example in training:
         print(example)
+
+    setup(training, [100, 50])
 
     ### I expect the running of your program will work something like this;
     ### this is not mandatory and you could have something else below entirely.
