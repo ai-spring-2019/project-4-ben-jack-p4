@@ -4,7 +4,7 @@ Ben and Jack
 Usage: python3 project3.py DATASET.csv
 """
 
-import csv, sys, random, math
+import csv, sys, random, math, time
 
 def read_data(filename, delimiter=",", has_header=True):
     """Reads datafile using given delimiter. Returns a header and a list of
@@ -262,10 +262,11 @@ def cross_validation(data, k, s_defn, epochs):
 
     total_error = 0
     runs = 0
+    subset_size = math.ceil(n/k)
 
-    for i in range(math.ceil(n/k)):
-        begin = i*k
-        end = ((i+1) * k if (i+1) * k < n else n)
+    for i in range(k):
+        begin = i*subset_size
+        end = ((i+1) * subset_size if (i+1) * subset_size < n else n)
 
         training_data = data[:begin] + data[end:]
         test_data = data[begin:end]
@@ -302,13 +303,25 @@ def main():
     # for example in training:
     #     print(example)
 
-    hidden_layers = [20, 20]
+    print("Epochs,hidden_layers,k,error,time", file=open("test.csv", "a"))
+    for k in [len(training)]:
+        for epochs in range(100, 301, 100):
+            for hidden_layers in [[50], [20, 30], [10, 15, 25]]:
 
-    s_defn = StructureDefn(len(training[0][0]),
-                           len(training[0][1]),
-                           hidden_layers)
+                start = time.time()
+                s_defn = StructureDefn(len(training[0][0]),
+                                       len(training[0][1]),
+                                       hidden_layers)
 
-    print(cross_validation(training, 10, s_defn, 50))
+                h_l_s = ""
+                for layer in hidden_layers:
+                    h_l_s += str(layer) + "_"
+                print(str(epochs) + "," + str(h_l_s) + "," + str(k) + ",", file=open("test.csv", "a"), end="")
+                print(cross_validation(training, k, s_defn, epochs), file=open("test.csv", "a"), end="")
+                end = time.time() - start
+                print("," + str(end), file=open("test.csv", "a"))
+
+
 
     ### I expect the running of your program will work something like this;
     ### this is not mandatory and you could have something else below entirely.
