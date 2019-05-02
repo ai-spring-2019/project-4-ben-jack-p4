@@ -237,20 +237,48 @@ class NeuralNetwork:
             e.refresh_weight(alpha)
 
     def validate(self, validation_examples):
-        total_correct = 0
+        total_error = 0
         for ex in validation_examples:
 
             output_values = list(map(lambda n : n.get_a_i(), self._propagate(ex)))
-            is_correct = True
+            output_error = 0
 
             print("Validating on example: " + str(ex[1]) + " " + str(output_values))
 
             for i in range(len(output_values)):
-                if output_values[i] != ex[1][i]:
-                    is_correct = False
-            if is_correct:
-                total_correct += 1
-        print(total_correct / len(validation_examples))
+                output_error += abs(output_values[i] - ex[1][i])
+
+            output_error /= len(output_values)
+            total_error += output_error
+
+        average_error = total_error / len(validation_examples)
+
+        print("Error", average_error)
+        return average_error
+
+
+def cross_validation(data, k, s_defn, epochs):
+    n = len(data)
+
+    total_error = 0
+    runs = 0
+
+    for i in range(math.ceil(n/k)):
+        begin = i*k
+        end = ((i+1) * k if (i+1) * k < n else n)
+
+        training_data = data[:begin] + data[end:]
+        test_data = data[begin:end]
+
+        runs += 1
+
+        network = NeuralNetwork(training_data, s_defn)
+
+        network.train(epochs)
+
+        total_error += network.validate(test_data)
+
+    return total_error/runs
 
 
 def setup(training, hidden_layers):
@@ -258,9 +286,8 @@ def setup(training, hidden_layers):
                            len(training[0][1]),
                            hidden_layers)
     network = NeuralNetwork(training, s_defn)
-    network.train(200)
 
-    network.validate(training)
+    return network
 
 
 def main():
@@ -275,7 +302,13 @@ def main():
     # for example in training:
     #     print(example)
 
-    setup(training, [20, 10, 5, 20])
+    hidden_layers = [20, 20]
+
+    s_defn = StructureDefn(len(training[0][0]),
+                           len(training[0][1]),
+                           hidden_layers)
+
+    print(cross_validation(training, 10, s_defn, 50))
 
     ### I expect the running of your program will work something like this;
     ### this is not mandatory and you could have something else below entirely.
