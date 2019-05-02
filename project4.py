@@ -1,5 +1,5 @@
 """
-PLEASE DOCUMENT HERE
+Ben and Jack
 
 Usage: python3 project3.py DATASET.csv
 """
@@ -113,6 +113,7 @@ class Node:
         self._edges_forward = []
         self._edges_backward = []
         self._layer = layer
+        self._a_i = random.randrange(0,1)
 
     def set_forward_edge(self, edge):
         self._edges_forward.append(edge)
@@ -183,7 +184,7 @@ class NeuralNetwork:
         for i in range(len(self._all_layers) - 1):
             for n1 in self._all_layers[i]:
                 for n2 in self._all_layers[i+1]:
-                    e = Edge(n1, n2, random.randrange(0, 1))
+                    e = Edge(n1, n2, random.randrange(-1, 1))
                     self._edges.append(e)
                     n1.set_forward_edge(e)
                     n2.set_backward_edge(e)
@@ -215,10 +216,12 @@ class NeuralNetwork:
     def _back_propagate(self, training_example):
 
         for j in range(len(self._output_layer)):
+
             node = self._output_layer[j]
             ex = training_example[1][j]
 
             a_i = node.get_a_i()
+
             node.set_error(a_i * (1 - a_i) * (ex - a_i))
 
         for i in range(len(self._all_layers) - 2, 0, -1):
@@ -255,7 +258,7 @@ def setup(training, hidden_layers):
                            len(training[0][1]),
                            hidden_layers)
     network = NeuralNetwork(training, s_defn)
-    network.train(20)
+    network.train(200)
 
     network.validate(training)
 
@@ -272,7 +275,7 @@ def main():
     # for example in training:
     #     print(example)
 
-    setup(training, [10, 50])
+    setup(training, [20, 10, 5, 20])
 
     ### I expect the running of your program will work something like this;
     ### this is not mandatory and you could have something else below entirely.
