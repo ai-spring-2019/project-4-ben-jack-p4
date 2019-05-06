@@ -192,7 +192,7 @@ class NeuralNetwork:
     def train(self, epochs):
 
         for t in range(epochs):
-            print("Running epoch " + str(t) + "...")
+            #print("Running epoch " + str(t) + "...")
             alpha = 1000/(1000 + t)
 
             for example in self._training_data:
@@ -256,6 +256,24 @@ class NeuralNetwork:
         print("Error", average_error)
         return average_error
 
+    def validate_binary(self, validation_examples):
+        total_correct = 0
+        for ex in validation_examples:
+
+            output_values = list(map(lambda n : n.get_a_i(), self._propagate(ex)))
+
+            print("Validating on example: " + str(ex[1]) + " " + str(output_values))
+
+            output = (0 if output_values[0] < 0.5 else 1)
+
+            if output == ex[1][0]:
+                total_correct += 1
+
+        percent_correct = total_correct / len(validation_examples)
+
+        print("Fit Percentage:", percent_correct)
+        return percent_correct
+
 
 def cross_validation(data, k, s_defn, epochs):
     n = len(data)
@@ -268,27 +286,58 @@ def cross_validation(data, k, s_defn, epochs):
         begin = i*subset_size
         end = ((i+1) * subset_size if (i+1) * subset_size < n else n)
 
-        training_data = data[:begin] + data[end:]
-        test_data = data[begin:end]
+        if begin < end:
+            training_data = data[:begin] + data[end:]
+            test_data = data[begin:end]
 
-        runs += 1
+            runs += 1
 
-        network = NeuralNetwork(training_data, s_defn)
+            network = NeuralNetwork(training_data, s_defn)
 
-        network.train(epochs)
+            network.train(epochs)
 
-        total_error += network.validate(test_data)
+            total_error += network.validate(test_data)
+
+            print(epochs, runs)
 
     return total_error/runs
 
+def cross_validation_binary(data, k, s_defn, epochs):
+    n = len(data)
 
-def setup(training, hidden_layers):
+    total_correct = 0
+    runs = 0
+    subset_size = math.ceil(n/k)
+
+    for i in range(k):
+        begin = i*subset_size
+        end = ((i+1) * subset_size if (i+1) * subset_size < n else n)
+
+        if begin < end:
+            training_data = data[:begin] + data[end:]
+            test_data = data[begin:end]
+
+            runs += 1
+
+            network = NeuralNetwork(training_data, s_defn)
+
+            network.train(epochs)
+
+            total_correct += network.validate_binary(test_data)
+
+            print(epochs, runs)
+
+    return total_correct/runs
+
+def setup_train_validate(training, hidden_layers, epochs):
     s_defn = StructureDefn(len(training[0][0]),
                            len(training[0][1]),
                            hidden_layers)
     network = NeuralNetwork(training, s_defn)
 
-    return network
+    network.train(epochs)
+
+    print(network.validate(training))
 
 
 def main():
@@ -303,10 +352,13 @@ def main():
     # for example in training:
     #     print(example)
 
-    print("Epochs,hidden_layers,k,error,time", file=open("test.csv", "a"))
-    for k in [len(training)]:
-        for epochs in range(100, 301, 100):
-            for hidden_layers in [[50], [20, 30], [10, 15, 25]]:
+    #setup_train_validate(training, [6], 10000)
+
+    #
+    print("Epochs,hidden_layers,k,Accuracy,time", file=open("test.csv", "a"))
+    for k in [5]:
+        for epochs in [100, 1000, 10000]:
+            for hidden_layers in [[8], [8, 8, 16], [16, 16, 32]]:
 
                 start = time.time()
                 s_defn = StructureDefn(len(training[0][0]),
@@ -317,16 +369,12 @@ def main():
                 for layer in hidden_layers:
                     h_l_s += str(layer) + "_"
                 print(str(epochs) + "," + str(h_l_s) + "," + str(k) + ",", file=open("test.csv", "a"), end="")
-                print(cross_validation(training, k, s_defn, epochs), file=open("test.csv", "a"), end="")
+                print(cross_validation_binary(training, k, s_defn, epochs), file=open("test.csv", "a"), end="")
                 end = time.time() - start
                 print("," + str(end), file=open("test.csv", "a"))
 
 
 
-    ### I expect the running of your program will work something like this;
-    ### this is not mandatory and you could have something else below entirely.
-    # nn = NeuralNetwork([3, 6, 3])
-    # nn.back_propagation_learning(training)
 
 if __name__ == "__main__":
     main()
