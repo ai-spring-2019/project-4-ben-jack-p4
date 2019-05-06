@@ -184,7 +184,7 @@ class NeuralNetwork:
         for i in range(len(self._all_layers) - 1):
             for n1 in self._all_layers[i]:
                 for n2 in self._all_layers[i+1]:
-                    e = Edge(n1, n2, random.randrange(-1, 1))
+                    e = Edge(n1, n2, random.randrange(-2, 2))
                     self._edges.append(e)
                     n1.set_forward_edge(e)
                     n2.set_backward_edge(e)
@@ -237,24 +237,24 @@ class NeuralNetwork:
             e.refresh_weight(alpha)
 
     def validate(self, validation_examples):
-        total_error = 0
+        total_correct = 0
         for ex in validation_examples:
 
             output_values = list(map(lambda n : n.get_a_i(), self._propagate(ex)))
-            output_error = 0
 
             print("Validating on example: " + str(ex[1]) + " " + str(output_values))
 
+            greatest = 0
             for i in range(len(output_values)):
-                output_error += abs(output_values[i] - ex[1][i])
+                if output_values[greatest] < output_values[i]:
+                    greatest = i
 
-            output_error /= len(output_values)
-            total_error += output_error
+            if ex[1][greatest] == 1:
+                total_correct += 1
 
-        average_error = total_error / len(validation_examples)
-
-        print("Error", average_error)
-        return average_error
+        percent_correct = total_correct/len(validation_examples)
+        print("Accuracy:", percent_correct)
+        return percent_correct
 
     def validate_binary(self, validation_examples):
         total_correct = 0
@@ -278,7 +278,7 @@ class NeuralNetwork:
 def cross_validation(data, k, s_defn, epochs):
     n = len(data)
 
-    total_error = 0
+    total_accuracy = 0
     runs = 0
     subset_size = math.ceil(n/k)
 
@@ -296,11 +296,11 @@ def cross_validation(data, k, s_defn, epochs):
 
             network.train(epochs)
 
-            total_error += network.validate(test_data)
+            total_accuracy += network.validate(test_data)
 
             print(epochs, runs)
 
-    return total_error/runs
+    return total_accuracy/runs
 
 def cross_validation_binary(data, k, s_defn, epochs):
     n = len(data)
@@ -347,6 +347,7 @@ def main():
 
     # Note: add 1.0 to the front of each x vector to account for the dummy input
     training = [([1.0] + x, y) for (x, y) in pairs]
+    random.shuffle(training)
 
     # Check out the data:
     # for example in training:
@@ -355,10 +356,10 @@ def main():
     #setup_train_validate(training, [6], 10000)
 
     #
-    print("Epochs,hidden_layers,k,Accuracy,time", file=open("test.csv", "a"))
+    print("Epochs,hidden_layers,k,Accuracy,time", file=open("test_multiclass_shuffled" + sys.argv[1], "a"))
     for k in [5]:
         for epochs in [100, 1000, 10000]:
-            for hidden_layers in [[8], [8, 8, 16], [16, 16, 32]]:
+            for hidden_layers in [[8, 8], [8, 8, 16], [16, 16, 32]]:
 
                 start = time.time()
                 s_defn = StructureDefn(len(training[0][0]),
@@ -368,10 +369,10 @@ def main():
                 h_l_s = ""
                 for layer in hidden_layers:
                     h_l_s += str(layer) + "_"
-                print(str(epochs) + "," + str(h_l_s) + "," + str(k) + ",", file=open("test.csv", "a"), end="")
-                print(cross_validation_binary(training, k, s_defn, epochs), file=open("test.csv", "a"), end="")
+                print(str(epochs) + "," + str(h_l_s) + "," + str(k) + ",", file=open("test_multiclass_shuffled" + sys.argv[1], "a"), end="")
+                print(cross_validation(training, k, s_defn, epochs), file=open("test_multiclass_shuffled" + sys.argv[1], "a"), end="")
                 end = time.time() - start
-                print("," + str(end), file=open("test.csv", "a"))
+                print("," + str(end), file=open("test_multiclass_shuffled" + sys.argv[1], "a"))
 
 
 
