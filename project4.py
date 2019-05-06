@@ -358,8 +358,8 @@ def main():
     #
     print("Epochs,hidden_layers,k,Accuracy,time", file=open("test_multiclass_shuffled" + sys.argv[1], "a"))
     for k in [5]:
-        for epochs in [100, 1000, 10000]:
-            for hidden_layers in [[8, 8], [8, 8, 16], [16, 16, 32]]:
+        for epochs in [100, 1000]:
+            for hidden_layers in [[25, 25]]:
 
                 start = time.time()
                 s_defn = StructureDefn(len(training[0][0]),
