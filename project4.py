@@ -365,23 +365,19 @@ def main():
     random.shuffle(training)
 
 
-    # Check out the data:
-    for example in training:
-        print(example)
+    # # Check out the data:
+    # for example in training:
+    #     print(example)
 
     normalize(training)
-
-    # Check out the data:
-    for example in training:
-        print(example)
 
     # setup_train_validate(training, [6], 1000)
 
     # #
-    print("Epochs,hidden_layers,k,Accuracy,time", file=open("test_multiclass_shuffled_new_alpha_min1_6_" + sys.argv[1], "a"))
+    print("Epochs,hidden_layers,k,Accuracy,time", file=open("test_multiclass_shuffled_new_alpha_min1_11_" + sys.argv[1], "a"))
     for k in [5]:
-        for epochs in [500]:
-            for hidden_layers in [[6, 6], [8, 8], [10, 10]]:
+        for epochs in [1000]:
+            for hidden_layers in [[11, 11]]:
 
                 start = time.time()
                 s_defn = StructureDefn(len(training[0][0]),
@@ -391,10 +387,10 @@ def main():
                 h_l_s = ""
                 for layer in hidden_layers:
                     h_l_s += str(layer) + "_"
-                print(str(epochs) + "," + str(h_l_s) + "," + str(k) + ",", file=open("test_multiclass_shuffled_new_alpha_min1_6_" + sys.argv[1], "a"), end="")
-                print(cross_validation(training, k, s_defn, epochs), file=open("test_multiclass_shuffled_new_alpha_min1_6_" + sys.argv[1], "a"), end="")
+                print(str(epochs) + "," + str(h_l_s) + "," + str(k) + ",", file=open("test_multiclass_shuffled_new_alpha_min1_11_" + sys.argv[1], "a"), end="")
+                print(cross_validation(training, k, s_defn, epochs), file=open("test_multiclass_shuffled_new_alpha_min1_11_" + sys.argv[1], "a"), end="")
                 end = time.time() - start
-                print("," + str(end), file=open("test_multiclass_shuffled_new_alpha_min1_6_" + sys.argv[1], "a"))
+                print("," + str(end), file=open("test_multiclass_shuffled_new_alpha_min1_11_" + sys.argv[1], "a"))
 
 
 

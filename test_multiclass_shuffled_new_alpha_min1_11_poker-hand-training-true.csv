@@ -1,0 +1,2 @@
+Epochs,hidden_layers,k,Accuracy,time
+1000,11_11_,5,0.5307077169132347,37290.25248885155
