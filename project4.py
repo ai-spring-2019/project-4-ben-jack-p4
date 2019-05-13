@@ -394,6 +394,13 @@ parser.add_argument('--epochs', '-e',
                     required=False,
                     help='Number of epochs')
 
+parser.add_argument('--noheader', '-n',
+                    dest='noheader',
+                    default=False,
+                    action='store_true',
+                    required=False,
+                    help='Omit header row from csv')
+
 
 def main():
 
@@ -412,7 +419,8 @@ def main():
     #WARN: potentially dangerous to evaluate code in this way
     hidden_layers = ast.literal_eval(args.layer_structure)
 
-    print("Epochs,hidden_layers,k,Accuracy,time", file=open(args.output_file, "a"))
+    if not args.noheader:
+        print("Epochs,hidden_layers,k,Accuracy,time", file=open(args.output_file, "a"))
 
     start = time.time()
     s_defn = StructureDefn(len(training[0][0]),
