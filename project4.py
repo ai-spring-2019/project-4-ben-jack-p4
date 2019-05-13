@@ -4,7 +4,7 @@ Ben and Jack
 Usage: python3 project3.py DATASET.csv
 """
 
-import csv, sys, random, math, time, statistics
+import csv, sys, random, math, time, statistics, ast, argparse
 
 def read_data(filename, delimiter=",", has_header=True):
     """Reads datafile using given delimiter. Returns a header and a list of
@@ -354,9 +354,52 @@ def normalize(data):
                 data[example][0][entry] = (data[example][0][entry] - mean)/std_dev
 
 
+VALIDATION_OPTS = {'multi' : cross_validation,
+                   'binary' : cross_validation_binary}
+
+parser = argparse.ArgumentParser(description='AI Project Four -- Ben/Jack')
+
+parser.add_argument('--validation', '-v',
+                    dest='validation',
+                    choices=VALIDATION_OPTS.keys(),
+                    help='Cross Validation: multi binary',
+                    default="multi",
+                    required=False)
+
+parser.add_argument('--data', '-d',
+                    dest='data_path',
+                    required=True,
+                    help='Data file')
+
+parser.add_argument('--output', '-o',
+                    dest='output_file',
+                    required=True,
+                    help='File to output run data to')
+
+parser.add_argument('--k-val', '-k',
+                    dest='k_value',
+                    default=5, type=int,
+                    required=False,
+                    help='K value for cross validation')
+
+parser.add_argument('--layers', '-l',
+                    dest='layer_structure',
+                    required=False,
+                    default="[5,5]",
+                    help='Structure of hidden layers. Ex: [10,10,5] (Omit spaces)')
+
+parser.add_argument('--epochs', '-e',
+                    dest='epochs',
+                    default=500, type=int,
+                    required=False,
+                    help='Number of epochs')
+
 
 def main():
-    header, data = read_data(sys.argv[1], ",")
+
+    args = parser.parse_args()
+
+    header, data = read_data(args.data_path, ",")
 
     pairs = convert_data_to_pairs(data, header)
 
@@ -364,33 +407,27 @@ def main():
     training = [([1.0] + x, y) for (x, y) in pairs]
     random.shuffle(training)
 
-
-    # # Check out the data:
-    # for example in training:
-    #     print(example)
-
     normalize(training)
 
-    # setup_train_validate(training, [6], 1000)
+    #WARN: potentially dangerous to evaluate code in this way
+    hidden_layers = ast.literal_eval(args.layer_structure)
 
-    # #
-    print("Epochs,hidden_layers,k,Accuracy,time", file=open("test_multiclass_" + sys.argv[1], "a"))
-    for k in [5]:
-        for epochs in [500]:
-            for hidden_layers in [[10, 10],[10,5],[15,15],[15,10],[10,15],[10,15,5],[10,15,10],[5,10,15],[10,10,10]]:
+    print("Epochs,hidden_layers,k,Accuracy,time", file=open(args.output_file, "a"))
 
-                start = time.time()
-                s_defn = StructureDefn(len(training[0][0]),
-                                       len(training[0][1]),
-                                       hidden_layers)
+    start = time.time()
+    s_defn = StructureDefn(len(training[0][0]),
+                           len(training[0][1]),
+                           hidden_layers)
 
-                h_l_s = ""
-                for layer in hidden_layers:
-                    h_l_s += str(layer) + "_"
-                print(str(epochs) + "," + str(h_l_s) + "," + str(k) + ",", file=open("test_multiclass_" + sys.argv[1], "a"), end="")
-                print(cross_validation(training, k, s_defn, epochs), file=open("test_multiclass_" + sys.argv[1], "a"), end="")
-                end = time.time() - start
-                print("," + str(end), file=open("test_multiclass_" + sys.argv[1], "a"))
+    h_l_s = ""
+    for layer in hidden_layers:
+        h_l_s += str(layer) + "_"
+
+    print(str(args.epochs) + "," + str(h_l_s) + "," + str(args.k_value) + ",", file=open(args.output_file, "a"), end="")
+    print(VALIDATION_OPTS[args.validation](training, args.k_value, s_defn, args.epochs),
+          file=open(args.output_file, "a"), end="")
+    end = time.time() - start
+    print("," + str(end), file=open(args.output_file, "a"))
 
 
 if __name__ == "__main__":
