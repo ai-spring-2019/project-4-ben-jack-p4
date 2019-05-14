@@ -420,7 +420,7 @@ def main():
     hidden_layers = ast.literal_eval(args.layer_structure)
 
     if not args.noheader:
-        print("Epochs,hidden_layers,k,Accuracy,time", file=open(args.output_file, "a"))
+        print("Data,Epochs,hidden_layers,k,Accuracy,time", file=open(args.output_file, "a"))
 
     start = time.time()
     s_defn = StructureDefn(len(training[0][0]),
@@ -431,7 +431,7 @@ def main():
     for layer in hidden_layers:
         h_l_s += str(layer) + "_"
 
-    print(str(args.epochs) + "," + str(h_l_s) + "," + str(args.k_value) + ",", file=open(args.output_file, "a"), end="")
+    print(args.data_path + "," + str(args.epochs) + "," + str(h_l_s) + "," + str(args.k_value) + ",", file=open(args.output_file, "a"), end="")
     print(VALIDATION_OPTS[args.validation](training, args.k_value, s_defn, args.epochs),
           file=open(args.output_file, "a"), end="")
     end = time.time() - start

@@ -1,0 +1,2 @@
+Data,Epochs,hidden_layers,k,Accuracy,time
+breast-cancer-wisconsin-normalized.csv,100,30_,5,
