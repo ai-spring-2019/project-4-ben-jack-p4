@@ -1,7 +1,26 @@
 """
 Ben and Jack
 
-Usage: python3 project3.py DATASET.csv
+usage: project4.py [-h] [--validation {multi,binary}] --data DATA_PATH
+                   --output OUTPUT_FILE [--k-val K_VALUE]
+                   [--layers LAYER_STRUCTURE] [--epochs EPOCHS] [--noheader]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --validation {multi,binary}, -v {multi,binary}
+                        Cross Validation: multi binary
+  --data DATA_PATH, -d DATA_PATH
+                        Data file
+  --output OUTPUT_FILE, -o OUTPUT_FILE
+                        File to output run data to
+  --k-val K_VALUE, -k K_VALUE
+                        K value for cross validation
+  --layers LAYER_STRUCTURE, -l LAYER_STRUCTURE
+                        Structure of hidden layers. Ex: [10,10,5] (Omit
+                        spaces)
+  --epochs EPOCHS, -e EPOCHS
+                        Number of epochs
+  --noheader, -n        Omit header row from csv
 """
 
 import csv, sys, random, math, time, statistics, ast, argparse
@@ -361,13 +380,18 @@ def cross_validation_binary(data, k, s_defn, epochs):
     return total_correct/runs
 
 def setup_train_validate(training, hidden_layers, epochs):
+    """Train and validate a network"""
+    #create structure definition
     s_defn = StructureDefn(len(training[0][0]),
                            len(training[0][1]),
                            hidden_layers)
+
+    #create network
     network = NeuralNetwork(training, s_defn)
 
     network.train(epochs)
 
+    #print validation information
     print(network.validate(training))
 
 def normalize(data):
@@ -391,6 +415,8 @@ def normalize(data):
 
 VALIDATION_OPTS = {'multi' : cross_validation,
                    'binary' : cross_validation_binary}
+
+# ADD COMMAND LINE ARGUMENTS TO PARSER
 
 parser = argparse.ArgumentParser(description='AI Project Four -- Ben/Jack')
 
@@ -462,6 +488,7 @@ def main():
                            len(training[0][1]),
                            hidden_layers)
 
+    #write relevant information to a csv
     h_l_s = ""
     for layer in hidden_layers:
         h_l_s += str(layer) + "_"
