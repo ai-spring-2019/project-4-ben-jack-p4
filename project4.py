@@ -108,42 +108,52 @@ class Edge:
 
 class Node:
     def __init__(self, layer):
+        #edges incident to this node
         self._edges_forward = []
         self._edges_backward = []
         self._layer = layer
         self._a_i = 1
 
     def set_forward_edge(self, edge):
+        """Set a forward edge"""
         self._edges_forward.append(edge)
 
     def set_backward_edge(self, edge):
+        """Set a backward edge"""
         self._edges_backward.append(edge)
 
     def propagate(self):
+        """Propogate from backward edges"""
         sum = 0
         for e in self._edges_backward:
             sum += e.propagate()
         return sum
 
     def back_propagate(self):
+        """Back propagate through forward edges"""
         sum = 0
         for e in self._edges_forward:
             sum += e.back_propagate()
         return sum
 
     def set_a_i(self, a_i):
+        """Set node a_i value"""
         self._a_i = a_i
 
     def get_a_i(self):
+        """Get the node's a_i value"""
         return self._a_i
 
     def set_error(self, error):
+        """Set the node's error value"""
         self._error = error
 
     def get_error(self):
+        """Get the node's error value"""
         return self._error
 
     def __str__(self):
+        """String rep for debugging"""
         return "Node: value: " + str(self._value) + " a_i: " + str(self._a_i) + " Layer: " + str(self._layer)
 
 class NeuralNetwork:
